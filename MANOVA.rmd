@@ -1,0 +1,43 @@
+---
+title: "R Exercise for MANOVA"
+author: "Sohee Kang"
+date: "October 22, 2018"
+output: word_document
+---
+
+```{r}
+data_1 = read.table("T6-13.txt")
+period <- factor(data_1$V5)
+data_1.manova<-manova(cbind(data_1$V1,data_1$V2,data_1$V3,data_1$V4) ~ period)
+group.sample.sizes <- c(30,30,30)
+
+
+```
+```{r}
+
+
+my.alpha <- 0.10 # family confidence level for CIs is 90% here
+my.n <- 90
+
+my.k <- 3  # number of groups
+my.p <- 4  # number of variables
+
+E = (my.n - 1)*var(residuals(data_1.manova))
+
+for (i in 1:my.p) {
+
+pair.mean.diffs <- cbind( t(combn(my.k,2)),combn(tapply(data_1[,i],period,mean),2,FUN=diff) )
+
+t.val <- qt(my.alpha/(my.p*my.k*(my.k-1)), df=my.n-my.k, lower=F)
+
+
+CI.L <- pair.mean.diffs[,3] - t.val*sqrt((diag(E)[i]/(my.n-my.k))*(1/group.sample.sizes[pair.mean.diffs[,1]] + 1/group.sample.sizes[pair.mean.diffs[,2]]) )
+CI.U <- pair.mean.diffs[,3] + t.val*sqrt((diag(E)[i]/(my.n-my.k))*(1/group.sample.sizes[pair.mean.diffs[,1]] + 1/group.sample.sizes[pair.mean.diffs[,2]]) )
+
+my.table.mat<-cbind(pair.mean.diffs, round(CI.L,3), round(CI.U,3), rep(i,times=nrow(pair.mean.diffs)) )
+my.table<-as.data.frame(my.table.mat)
+names(my.table)=c('grp1','grp2','diff.samp.means','lower.CI','upper.CI','variable'); print(my.table)
+}
+
+```
+
